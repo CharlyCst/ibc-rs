@@ -83,9 +83,9 @@ impl From<ConsensusState> for RawConsensusState {
 impl From<SignedHeader> for ConsensusState {
     fn from(header: SignedHeader) -> Self {
         Self {
-            root: CommitmentRoot::from_bytes(header.header.app_hash.as_ref()),
-            timestamp: header.header.time,
-            next_validators_hash: header.header.next_validators_hash,
+            root: CommitmentRoot::from_bytes(header.header().app_hash.as_ref()),
+            timestamp: header.header().time,
+            next_validators_hash: header.header().next_validators_hash,
         }
     }
 }

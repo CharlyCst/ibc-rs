@@ -21,9 +21,9 @@ pub struct Header {
 impl Header {
     pub(crate) fn consensus_state(&self) -> ConsensusState {
         ConsensusState {
-            timestamp: self.signed_header.header.time,
-            root: CommitmentRoot::from_bytes(self.signed_header.header.app_hash.as_ref()),
-            next_validators_hash: self.signed_header.header.next_validators_hash,
+            timestamp: self.signed_header.header().time,
+            root: CommitmentRoot::from_bytes(self.signed_header.header().app_hash.as_ref()),
+            next_validators_hash: self.signed_header.header().next_validators_hash,
         }
     }
 }
@@ -35,8 +35,8 @@ impl crate::ics02_client::header::Header for Header {
 
     fn height(&self) -> Height {
         Height::new(
-            ChainId::chain_version(self.signed_header.header.chain_id.to_string()),
-            u64::from(self.signed_header.header.height),
+            ChainId::chain_version(self.signed_header.header().chain_id.to_string()),
+            u64::from(self.signed_header.header().height),
         )
     }
 }
@@ -48,10 +48,11 @@ pub mod test_util {
     use tendermint::block::signed_header::SignedHeader;
     use tendermint::validator::Info as ValidatorInfo;
     use tendermint::validator::Set as ValidatorSet;
-    use tendermint::{vote, PublicKey};
+    use tendermint::PublicKey;
 
     use crate::ics07_tendermint::header::Header;
     use crate::Height;
+    use std::convert::TryInto;
 
     // TODO: This should be replaced with a ::default() or ::produce().
     // The implementation of this function comprises duplicate code (code borrowed from
@@ -74,10 +75,10 @@ pub mod test_util {
                 .unwrap(),
             )
             .unwrap(),
-            vote::Power::new(281_815),
+            281_815_u64.try_into().unwrap(),
         );
 
-        let vs = ValidatorSet::new(vec![v1]);
+        let vs = ValidatorSet::new(vec![v1], None, 281_815_u64.try_into().unwrap());
 
         Header {
             signed_header: shdr,

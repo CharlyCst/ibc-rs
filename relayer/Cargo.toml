@@ -31,13 +31,19 @@ crossbeam-channel = "0.5.0"
 
 [dependencies.tendermint]
 version = "0.17.0-rc1"
+git = "https://github.com/informalsystems/tendermint-rs"
+branch = "greg/research-json"
 
 [dependencies.tendermint-rpc]
 version = "0.17.0-rc1"
+git = "https://github.com/informalsystems/tendermint-rs"
+branch = "greg/research-json"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
 version = "0.17.0-rc1"
+git = "https://github.com/informalsystems/tendermint-rs"
+branch = "greg/research-json"
 
 # Needed for tx sign when ready in tendermint upgrade
 #k256 = { version = "0.4", features = ["ecdsa-core", "ecdsa", "sha256"]}

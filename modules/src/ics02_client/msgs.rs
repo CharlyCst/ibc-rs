@@ -161,11 +161,11 @@ mod tests {
 
         let tm_header = get_dummy_header();
         let tm_client_state = AnyClientState::Tendermint(ClientState {
-            chain_id: tm_header.signed_header.header.chain_id.to_string(),
+            chain_id: tm_header.signed_header.header().chain_id.to_string(),
             trusting_period: Duration::from_secs(64000),
             unbonding_period: Duration::from_secs(128000),
             max_clock_drift: Duration::from_millis(3000),
-            latest_height: Height::new(0, u64::from(tm_header.signed_header.header.height)),
+            latest_height: Height::new(0, u64::from(tm_header.signed_header.header().height)),
             frozen_height: Height::default(),
             allow_update_after_expiry: false,
             allow_update_after_misbehaviour: false,
