@@ -130,7 +130,7 @@ pub mod test_util {
                 .unwrap(),
             )
             .unwrap(),
-            vote::Power::new(281_815),
+            281_815_u64.try_into().unwrap(),
         );
 
         let vs = ValidatorSet::new(vec![v1], None, 281_815_u64.try_into().unwrap());

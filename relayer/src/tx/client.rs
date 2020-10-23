@@ -6,8 +6,11 @@ use ibc::ics02_client::client_def::{AnyClientState, AnyConsensusState, AnyHeader
 use ibc::ics02_client::client_type::ClientType;
 use ibc::ics02_client::msgs::create_client::MsgCreateAnyClient;
 use ibc::ics02_client::msgs::update_client::MsgUpdateAnyClient;
-use ibc::ics24_host::identifier::ClientId;
+use ibc::ics07_tendermint::header::Header as TendermintHeader;
+use ibc::ics24_host::identifier::{ClientId, ChainId};
 use ibc::ics24_host::Path::ClientState as ClientStatePath;
+use ibc::ics24_host::Path::ClientConsensusState;
+
 use ibc::tx_msg::Msg;
 
 use crate::chain::cosmos::block_on;
@@ -67,8 +70,8 @@ pub fn create_client(opts: CreateClientOptions) -> Result<(), Error> {
         src_chain.trusting_period(),
         src_chain.unbonding_period(),
         Duration::from_millis(3000),
-        Height::new(chain_version(version.clone()), height),
-        Height::new(chain_version(version), 0),
+        Height::new(ChainId::chain_version(version.clone()), height),
+        Height::new(ChainId::chain_version(version), 0),
         "".to_string(),
         false,
         false,
@@ -124,7 +127,7 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
     let last_state = dest_chain
         .query(
             ClientStatePath(opts.clone().dest_client_id),
-            0_u64.try_into()?,
+            0_u64.try_into().map_err(|e| Kind::BadParameter.context(e))?,
             false,
         )
         .map_err(|e| Kind::Query.context(e).into())
@@ -135,9 +138,9 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
     let last_consensus = dest_chain
         .query(
             ClientConsensusState {
-                client_id: opts.client_id,
-                epoch: opts.version_number,
-                height: opts.version_height,
+                client_id: opts.dest_client_id,
+                epoch: last_state.latest_height().version_number,
+                height: last_state.latest_height().version_height,
             },
             0.try_into()?,
             false,
@@ -154,7 +157,7 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
             let src_chain = CosmosSDKChain::from_config(opts.clone().src_chain_config)?;
             let tm_header = block_on(query_header_at_height::<CosmosSDKChain>(
                 &src_chain,
-                opts.consensus_height.version_height.try_into().unwrap(),
+                last_state.latest_height().version_height.try_into().unwrap(),
             ))
             .map_err(|e| {
                 Kind::UpdateClient(
@@ -177,7 +180,7 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
 
             // Build the domain type message
             let new_msg = MsgUpdateAnyClient {
-                client_id: opts.dest_client_id,
+                client_id: opts.dest_client_id.clone(),
                 header,
                 signer,
             };
@@ -193,6 +196,6 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
             proto_msgs.push(any_msg);
             dest_chain.send(&proto_msgs)
         }
-        _ => {}
+        _ => Err(Kind::UpdateClient(opts.dest_client_id.clone(), "bad chain".into()).into())
     }
 }

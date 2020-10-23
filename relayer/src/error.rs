@@ -46,9 +46,21 @@ pub enum Kind {
     #[error("Failed to create client {0}: {1}")]
     CreateClient(ClientId, String),
 
+    /// Update client failure
+    #[error("Failed to update client {0}: {1}")]
+    UpdateClient(ClientId, String),
+
     /// A message transaction failure
     #[error("Message transaction failure: {0}")]
     MessageTransaction(String),
+
+    /// Failed query
+    #[error("Bad parameter")]
+    Query,
+
+    /// Bad parameter
+    #[error("Bad parameter")]
+    BadParameter,
 }
 
 impl Kind {
