@@ -6,7 +6,7 @@ use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::context::ClientReader;
 use crate::ics02_client::error::{Error, Kind};
 use crate::ics02_client::handler::{ClientEvent, ClientResult};
-use crate::ics02_client::msgs::MsgCreateAnyClient;
+use crate::ics02_client::msgs::create_client::MsgCreateAnyClient;
 use crate::ics24_host::identifier::ClientId;
 
 /// The result following the successful processing of a `MsgCreateAnyClient` message. Preferably
@@ -43,12 +43,16 @@ pub fn process(
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+    use std::time::Duration;
+
     use crate::handler::HandlerOutput;
     use crate::ics02_client::client_def::{AnyClientState, AnyConsensusState};
     use crate::ics02_client::client_type::ClientType;
     use crate::ics02_client::error::Kind;
     use crate::ics02_client::handler::{dispatch, ClientEvent, ClientResult};
-    use crate::ics02_client::msgs::{ClientMsg, MsgCreateAnyClient};
+    use crate::ics02_client::msgs::create_client::MsgCreateAnyClient;
+    use crate::ics02_client::msgs::ClientMsg;
     use crate::ics03_connection::msgs::test_util::get_dummy_account_id;
     use crate::ics07_tendermint::client_state::ClientState;
     use crate::ics07_tendermint::header::test_util::get_dummy_header;
@@ -57,8 +61,6 @@ mod tests {
     use crate::mock_client::state::{MockClientState, MockConsensusState};
     use crate::mock_context::MockContext;
     use crate::Height;
-    use std::str::FromStr;
-    use std::time::Duration;
 
     #[test]
     fn test_create_client_ok() {
@@ -228,18 +230,18 @@ mod tests {
 
     #[test]
     fn test_tm_create_client_ok() {
-        let client_id = ClientId::from_str("tendermint").unwrap();
+        let client_id = ClientId::from_str("Tendermint").unwrap();
         let signer = get_dummy_account_id();
 
         let ctx = MockContext::default();
 
         let tm_header = get_dummy_header();
         let tm_client_state = AnyClientState::Tendermint(ClientState {
-            chain_id: tm_header.signed_header.header.chain_id.to_string(),
+            chain_id: tm_header.signed_header.header().chain_id.to_string(),
             trusting_period: Duration::from_secs(64000),
             unbonding_period: Duration::from_secs(128000),
             max_clock_drift: Duration::from_millis(3000),
-            latest_height: Height::new(0, u64::from(tm_header.signed_header.header.height)),
+            latest_height: Height::new(0, u64::from(tm_header.signed_header.header().height)),
             frozen_height: Height::zero(),
             allow_update_after_expiry: false,
             allow_update_after_misbehaviour: false,

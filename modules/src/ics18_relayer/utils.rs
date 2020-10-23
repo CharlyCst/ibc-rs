@@ -1,6 +1,7 @@
 use crate::ics02_client::client_def::AnyHeader;
 use crate::ics02_client::header::Header;
-use crate::ics02_client::msgs::{ClientMsg, MsgUpdateAnyClient};
+use crate::ics02_client::msgs::update_client::MsgUpdateAnyClient;
+use crate::ics02_client::msgs::ClientMsg;
 use crate::ics03_connection::msgs::test_util::get_dummy_account_id;
 use crate::ics18_relayer::context::ICS18Context;
 use crate::ics18_relayer::error::{Error, Kind};

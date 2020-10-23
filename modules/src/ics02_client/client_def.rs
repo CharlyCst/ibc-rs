@@ -2,6 +2,10 @@ use prost_types::Any;
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
+use tendermint_proto::{DomainType, Error, Kind};
+
+use crate::Height;
+
 use crate::downcast;
 use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::error;
@@ -12,11 +16,9 @@ use crate::ics07_tendermint as tendermint;
 use crate::ics07_tendermint::client_def::TendermintClient;
 use crate::ics07_tendermint::client_state::ClientState as TendermintClientState;
 use crate::ics07_tendermint::consensus_state::ConsensusState as TendermintConsensusState;
+use crate::ics07_tendermint::header::Header as TendermintHeader;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProof, CommitmentRoot};
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
-use crate::Height;
-
-use tendermint_proto::{DomainType, Error, Kind};
 
 pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.ClientState";
 pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
@@ -112,6 +114,44 @@ impl Header for AnyHeader {
 
             #[cfg(test)]
             Self::Mock(header) => header.height(),
+        }
+    }
+}
+
+impl DomainType<Any> for AnyHeader {}
+
+impl TryFrom<Any> for AnyHeader {
+    type Error = Error;
+
+    // TODO Fix type urls: avoid having hardcoded values sprinkled around the whole codebase.
+    fn try_from(raw: Any) -> Result<Self, Self::Error> {
+        match raw.type_url.as_str() {
+            "/ibc.tendermint.Header" => Ok(AnyHeader::Tendermint(TendermintHeader::decode_vec(
+                &raw.value,
+            )?)),
+
+            #[cfg(test)]
+            "/ibc.mock.Header" => Ok(AnyHeader::Mock(MockHeader::decode_vec(&raw.value)?)),
+
+            _ => Err(Kind::DecodeMessage
+                .context(error::Kind::UnknownHeaderType(raw.type_url))
+                .into()),
+        }
+    }
+}
+
+impl From<AnyHeader> for Any {
+    fn from(value: AnyHeader) -> Self {
+        match value {
+            AnyHeader::Tendermint(header) => Any {
+                type_url: "/ibc.tendermint.Header".to_string(),
+                value: header.encode_vec().unwrap(),
+            },
+            #[cfg(test)]
+            AnyHeader::Mock(header) => Any {
+                type_url: "/ibc.mock.Header".to_string(),
+                value: header.encode_vec().unwrap(),
+            },
         }
     }
 }
@@ -497,13 +537,13 @@ mod tests {
     fn to_and_from_any() {
         let tm_header = get_dummy_header();
         let tm_client_state = AnyClientState::Tendermint(ClientState {
-            chain_id: tm_header.signed_header.header.chain_id.to_string(),
+            chain_id: tm_header.signed_header.header().chain_id.to_string(),
             trusting_period: Duration::from_secs(64000),
             unbonding_period: Duration::from_secs(128000),
             max_clock_drift: Duration::from_millis(3000),
             latest_height: Height::new(
-                ChainId::chain_version(tm_header.signed_header.header.chain_id.to_string()),
-                u64::from(tm_header.signed_header.header.height),
+                ChainId::chain_version(tm_header.signed_header.header().chain_id.to_string()),
+                u64::from(tm_header.signed_header.header().height),
             ),
             frozen_height: Height::zero(),
             allow_update_after_expiry: false,

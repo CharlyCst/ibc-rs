@@ -33,6 +33,9 @@ pub enum Kind {
     #[error("unknown client consensus state type: {0}")]
     UnknownConsensusStateType(String),
 
+    #[error("unknown header type: {0}")]
+    UnknownHeaderType(String),
+
     #[error("invalid raw client state")]
     InvalidRawClientState,
 
