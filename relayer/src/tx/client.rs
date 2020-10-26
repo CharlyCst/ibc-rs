@@ -50,8 +50,8 @@ pub fn create_client(opts: CreateClientOptions) -> Result<(), Error> {
             .context(e)
         })?;
 
-    let height = u64::from(tm_latest_header.signed_header.header.height);
-    let version = tm_latest_header.signed_header.header.chain_id.to_string();
+    let height = u64::from(tm_latest_header.signed_header.header().height);
+    let version = tm_latest_header.signed_header.header().chain_id.to_string();
 
     let tm_consensus_state = ibc::ics07_tendermint::consensus_state::ConsensusState::from(
         tm_latest_header.signed_header,
