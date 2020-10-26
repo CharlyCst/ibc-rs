@@ -1,4 +1,3 @@
-use serde_derive::{Deserialize, Serialize};
 
 use tendermint::block::signed_header::SignedHeader;
 use tendermint::validator::Set as ValidatorSet;
@@ -10,7 +9,7 @@ use crate::ics24_host::identifier::ChainId;
 use crate::Height;
 
 /// Tendermint consensus header
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Header {
     pub signed_header: SignedHeader, // contains the commitment root
     pub validator_set: ValidatorSet, // the validator set that signed Header
