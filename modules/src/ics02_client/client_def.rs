@@ -1,5 +1,4 @@
 use prost_types::Any;
-use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 use crate::downcast;
@@ -87,7 +86,7 @@ pub trait ClientDef: Clone {
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)] // TODO: Add Eq
+#[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum AnyHeader {
     Tendermint(tendermint::header::Header),
@@ -116,7 +115,7 @@ impl Header for AnyHeader {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AnyClientState {
     Tendermint(TendermintClientState),
 

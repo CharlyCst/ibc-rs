@@ -1,5 +1,4 @@
 use chrono::{TimeZone, Utc};
-use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 use ibc_proto::ibc::lightclients::tendermint::v1::ConsensusState as RawConsensusState;
@@ -14,7 +13,7 @@ use crate::ics02_client::client_type::ClientType;
 use crate::ics07_tendermint::error::{Error, Kind};
 use crate::ics23_commitment::commitment::CommitmentRoot;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConsensusState {
     pub timestamp: Time,
     pub root: CommitmentRoot,

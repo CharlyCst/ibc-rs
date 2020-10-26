@@ -26,16 +26,16 @@ pub mod handle;
 /// Defines a blockchain as understood by the relayer
 pub trait Chain {
     /// Type of light blocks for this chain
-    type LightBlock: Send + Sync + Serialize + DeserializeOwned;
+    type LightBlock: Send + Sync;
 
     /// Type of light client for this chain
     type LightClient: LightClient<Self::LightBlock> + Send + Sync;
 
     /// Type of consensus state for this chain
-    type ConsensusState: ConsensusState + Send + Sync + Serialize + DeserializeOwned;
+    type ConsensusState: ConsensusState + Send + Sync;
 
     /// Type of the client state for this chain
-    type ClientState: ClientState + Send + Sync + Serialize + DeserializeOwned;
+    type ClientState: ClientState + Send + Sync;
 
     /// Type of RPC requester (wrapper around low-level RPC client) for this chain
     type RpcClient: RpcClient + Send + Sync;
