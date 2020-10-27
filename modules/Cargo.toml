@@ -14,10 +14,6 @@ description = """
     Implementation of the Inter-Blockchain Communication Protocol (IBC).
 """
 
-[dependencies.tendermint-proto]
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
-
 [dependencies]
 # Proto definitions for all IBC-related interfaces, e.g., connections or channels.
 ibc-proto = { version = "0.4.0", path = "../proto" }
@@ -35,15 +31,21 @@ bytes = "0.5.5"
 dyn-clonable = "0.9.0"
 regex = "1"
 
+[dependencies.tendermint-proto]
+#git = "https://github.com/informalsystems/tendermint-rs"
+#branch = "greg/research-json"
+#version = "0.17.0-rc1"
+path = "../../tendermint-rs/proto"
+
 [dependencies.tendermint]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/tendermint"
 
 [dependencies.tendermint-rpc]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/rpc"
 features = ["http-client", "websocket-client"]
 
 [dev-dependencies]

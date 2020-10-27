@@ -24,26 +24,26 @@ sled = "0.34.4"
 prost = "0.6.1"
 prost-types = { version = "0.6.1" }
 
+[dependencies.tendermint-proto]
+#git = "https://github.com/informalsystems/tendermint-rs"
+#branch = "greg/research-json"
+path = "../../tendermint-rs/proto"
+
 [dependencies.tendermint]
 version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/tendermint"
 
 [dependencies.tendermint-rpc]
 version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/rpc"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
 version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
-
-[dependencies.tendermint-proto]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/light-client"
 
 [dependencies.abscissa_core]
 version = "0.5.2"
