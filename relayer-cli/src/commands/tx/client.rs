@@ -5,8 +5,7 @@ use relayer::tx::client::{create_client, update_client, CreateClientOptions, Upd
 use crate::application::app_config;
 use crate::error::{Error, Kind};
 use crate::prelude::*;
-use ibc::ics24_host::identifier::{ChainId, ClientId};
-use ibc::Height;
+use ibc::ics24_host::identifier::ClientId;
 
 #[derive(Clone, Command, Debug, Options)]
 pub struct TxCreateClientCmd {
@@ -25,39 +24,17 @@ pub struct TxCreateClientCmd {
 
 impl TxCreateClientCmd {
     fn validate_options(&self, config: &Config) -> Result<CreateClientOptions, String> {
-        let dest_chain_id = self
-            .dest_chain_id
-            .clone()
-            .ok_or_else(|| "missing destination chain identifier".to_string())?;
-
-        let dest_chain_config = config
-            .chains
-            .iter()
-            .find(|c| c.id == dest_chain_id.parse().unwrap())
-            .ok_or_else(|| "missing destination chain configuration".to_string())?;
-
-        let src_chain_id = self
-            .src_chain_id
-            .clone()
-            .ok_or_else(|| "missing source chain identifier".to_string())?;
-
-        let src_chain_config = config
-            .chains
-            .iter()
-            .find(|c| c.id == src_chain_id.parse().unwrap())
-            .ok_or_else(|| "missing source chain configuration".to_string())?;
-
-        let dest_client_id = self
-            .dest_client_id
-            .as_ref()
-            .ok_or_else(|| "missing destination client identifier".to_string())?
-            .parse()
-            .map_err(|_| "bad client identifier".to_string())?;
+        let (dest_chain_config, src_chain_config, dest_client_id) = validate_common_options(
+            &self.dest_chain_id,
+            &self.src_chain_id,
+            &self.dest_client_id,
+            config,
+        )?;
 
         Ok(CreateClientOptions {
             dest_client_id,
-            dest_chain_config: dest_chain_config.clone(),
-            src_chain_config: src_chain_config.clone(),
+            dest_chain_config,
+            src_chain_config,
         })
     }
 }
@@ -99,58 +76,19 @@ pub struct TxUpdateClientCmd {
     dest_client_id: Option<String>,
 }
 
-fn validate_common_options(
-    dest_chain_id: &Option<ChainId>,
-    src_chain_id: &Option<ChainId>,
-    dest_client_id: &Option<String>,
-    config: &Config,
-) -> Result<(ChainConfig, ChainConfig, ClientId), String> {
-    let dest_chain_id = dest_chain_id
-        .clone()
-        .ok_or_else(|| "missing destination chain identifier".to_string())?;
-
-    let dest_chain_config = config
-        .chains
-        .iter()
-        .find(|c| c.id == dest_chain_id.parse().unwrap())
-        .ok_or_else(|| "missing destination chain configuration".to_string())?;
-
-    let src_chain_id = src_chain_id
-        .clone()
-        .ok_or_else(|| "missing source chain identifier".to_string())?;
-
-    let src_chain_config = config
-        .chains
-        .iter()
-        .find(|c| c.id == src_chain_id.parse().unwrap())
-        .ok_or_else(|| "missing source chain configuration".to_string())?;
-
-    let dest_client_id = dest_client_id
-        .as_ref()
-        .ok_or_else(|| "missing destination client identifier".to_string())?
-        .parse()
-        .map_err(|_| "bad client identifier".to_string())?;
-
-    Ok((
-        dest_chain_config.clone(),
-        src_chain_config.clone(),
-        dest_client_id,
-    ))
-}
-
 impl TxUpdateClientCmd {
     fn validate_options(&self, config: &Config) -> Result<UpdateClientOptions, String> {
         let (dest_chain_config, src_chain_config, dest_client_id) = validate_common_options(
-            &self.dest_chain_id.into(),
-            &self.src_chain_id.into(),
+            &self.dest_chain_id,
+            &self.src_chain_id,
             &self.dest_client_id,
             config,
         )?;
 
         Ok(UpdateClientOptions {
             dest_client_id,
-            dest_chain_config: dest_chain_config.clone(),
-            src_chain_config: src_chain_config.clone(),
+            dest_chain_config,
+            src_chain_config,
         })
     }
 }
@@ -175,4 +113,49 @@ impl Runnable for TxUpdateClientCmd {
             Err(e) => status_info!("client updated failed, error: ", "{}", e),
         }
     }
+}
+
+fn validate_common_options(
+    dest_chain_id: &Option<String>,
+    src_chain_id: &Option<String>,
+    dest_client_id: &Option<String>,
+    config: &Config,
+) -> Result<(ChainConfig, ChainConfig, ClientId), String> {
+    // Validate parameters
+    let dest_chain_id = dest_chain_id
+        .clone()
+        .ok_or_else(|| "missing destination chain identifier".to_string())?
+        .parse()
+        .map_err(|_| "bad destination chain identifier".to_string())?;
+
+    let src_chain_id = src_chain_id
+        .clone()
+        .ok_or_else(|| "missing source chain identifier".to_string())?
+        .parse()
+        .map_err(|_| "bad source chain identifier".to_string())?;
+
+    let dest_client_id = dest_client_id
+        .as_ref()
+        .ok_or_else(|| "missing destination client identifier".to_string())?
+        .parse()
+        .map_err(|_| "bad client identifier".to_string())?;
+
+    // Get the source and destination chain configuration
+    let dest_chain_config = config
+        .chains
+        .iter()
+        .find(|c| c.id == dest_chain_id)
+        .ok_or_else(|| "missing destination chain configuration".to_string())?;
+
+    let src_chain_config = config
+        .chains
+        .iter()
+        .find(|c| c.id == src_chain_id)
+        .ok_or_else(|| "missing source chain configuration".to_string())?;
+
+    Ok((
+        dest_chain_config.clone(),
+        src_chain_config.clone(),
+        dest_client_id,
+    ))
 }

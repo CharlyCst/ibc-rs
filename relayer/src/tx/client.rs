@@ -2,15 +2,15 @@ use prost_types::Any;
 use std::convert::TryInto;
 use std::time::Duration;
 
+use ibc::downcast;
 use ibc::ics02_client::client_def::{AnyClientState, AnyConsensusState, AnyHeader};
 use ibc::ics02_client::client_type::ClientType;
 use ibc::ics02_client::msgs::create_client::MsgCreateAnyClient;
 use ibc::ics02_client::msgs::update_client::MsgUpdateAnyClient;
 use ibc::ics07_tendermint::header::Header as TendermintHeader;
-use ibc::ics24_host::identifier::{ClientId, ChainId};
-use ibc::ics24_host::Path::ClientState as ClientStatePath;
+use ibc::ics24_host::identifier::{ChainId, ClientId};
 use ibc::ics24_host::Path::ClientConsensusState;
-
+use ibc::ics24_host::Path::ClientState as ClientStatePath;
 use ibc::tx_msg::Msg;
 
 use crate::chain::cosmos::block_on;
@@ -18,6 +18,7 @@ use crate::chain::{query_header_at_height, query_latest_header, Chain, CosmosSDK
 use crate::config::ChainConfig;
 use crate::error::{Error, Kind};
 use ibc::Height;
+use tendermint_proto::DomainType;
 
 #[derive(Clone, Debug)]
 pub struct CreateClientOptions {
@@ -127,75 +128,79 @@ pub fn update_client(opts: UpdateClientOptions) -> Result<(), Error> {
     let last_state = dest_chain
         .query(
             ClientStatePath(opts.clone().dest_client_id),
-            0_u64.try_into().map_err(|e| Kind::BadParameter.context(e))?,
+            0_u64
+                .try_into()
+                .map_err(|e| Kind::BadParameter.context(e))?,
             false,
         )
-        .map_err(|e| Kind::Query.context(e).into())
-        .and_then(|v| AnyClientState::decode_vec(&v).map_err(|e| Kind::Query.context(e).into()))
-        .map_err(|e| Kind::Query.context(e).into())?;
+        .map_err(|e| Kind::Query.context(e))
+        .and_then(|v| AnyClientState::decode_vec(&v).map_err(|e| Kind::Query.context(e)))
+        .map_err(|_| Kind::Query)?;
 
     // Query the last consensus state.
     let last_consensus = dest_chain
         .query(
             ClientConsensusState {
-                client_id: opts.dest_client_id,
+                client_id: opts.dest_client_id.clone(),
                 epoch: last_state.latest_height().version_number,
                 height: last_state.latest_height().version_height,
             },
-            0.try_into()?,
+            0_u64.try_into().unwrap(),
             false,
         )
-        .map_err(|e| Kind::Query.context(e).into())
-        .and_then(|v| AnyConsensusState::decode_vec(&v).map_err(|e| Kind::Query.context(e).into()))
-        .map_err(|e| Kind::Query.context(e).into())?;
+        .map_err(|e| Kind::Query.context(e))
+        .and_then(|v| AnyConsensusState::decode_vec(&v).map_err(|e| Kind::Query.context(e)))
+        .map_err(|e| Kind::Query.context(e))?;
 
-    match (last_state, last_consensus) {
-        (
-            Some(AnyClientState::Tendermint(tm_last_state)),
-            Some(AnyConsensusState::Tendermint(tm_last_consensus)),
-        ) => {
-            let src_chain = CosmosSDKChain::from_config(opts.clone().src_chain_config)?;
-            let tm_header = block_on(query_header_at_height::<CosmosSDKChain>(
-                &src_chain,
-                last_state.latest_height().version_height.try_into().unwrap(),
-            ))
-            .map_err(|e| {
-                Kind::UpdateClient(
-                    opts.dest_client_id.clone(),
-                    "failed to get the latest header".into(),
-                )
-                .context(e)
-            })?;
+    let (tm_last_state, tm_last_consensus) = downcast!(
+        last_state => AnyClientState::Tendermint,
+        last_consensus => AnyConsensusState::Tendermint,
+    )
+    .ok_or_else(|| Kind::Query.context("query result mismatch".to_string()))?;
 
-            let header = AnyHeader::Tendermint(TendermintHeader {
-                signed_header: tm_header.signed_header,
-                validator_set: tm_header.validators.clone(),
-                trusted_height: tm_last_state.latest_height,
-                trusted_validator_set: tm_header.next_validators, // TODO - just to compile, FIXME
-            });
+    let src_chain = CosmosSDKChain::from_config(opts.clone().src_chain_config)?;
+    let tm_header = block_on(query_header_at_height::<CosmosSDKChain>(
+        &src_chain,
+        tm_last_state
+            .latest_height()
+            .version_height
+            .try_into()
+            .map_err(|e| Kind::Query.context(e))?,
+    ))
+    .map_err(|e| {
+        Kind::UpdateClient(
+            opts.dest_client_id.clone(),
+            "failed to get the latest header".into(),
+        )
+        .context(e)
+    })?;
 
-            let signer = dest_chain.config().account_prefix.parse().map_err(|e| {
-                Kind::CreateClient(opts.dest_client_id.clone(), "bad signer".into()).context(e)
-            })?;
+    let header = AnyHeader::Tendermint(TendermintHeader {
+        signed_header: tm_header.signed_header,
+        validator_set: tm_header.validators.clone(),
+        trusted_height: tm_last_state.latest_height,
+        trusted_validator_set: tm_header.next_validators, // TODO - just to compile, FIXME
+    });
 
-            // Build the domain type message
-            let new_msg = MsgUpdateAnyClient {
-                client_id: opts.dest_client_id.clone(),
-                header,
-                signer,
-            };
+    let signer = dest_chain.config().account_prefix.parse().map_err(|e| {
+        Kind::UpdateClient(opts.dest_client_id.clone(), "bad signer".into()).context(e)
+    })?;
 
-            // Create a proto any message
-            let mut proto_msgs: Vec<Any> = Vec::new();
-            let any_msg = Any {
-                // TODO - add get_url_type() to prepend proper string to get_type()
-                type_url: "/ibc.client.MsgUpdateClient".to_ascii_lowercase(),
-                value: new_msg.get_sign_bytes(),
-            };
+    // Build the domain type message
+    let new_msg = MsgUpdateAnyClient {
+        client_id: opts.dest_client_id,
+        header,
+        signer,
+    };
 
-            proto_msgs.push(any_msg);
-            dest_chain.send(&proto_msgs)
-        }
-        _ => Err(Kind::UpdateClient(opts.dest_client_id.clone(), "bad chain".into()).into())
-    }
+    // Create a proto any message
+    let mut proto_msgs: Vec<Any> = Vec::new();
+    let any_msg = Any {
+        // TODO - add get_url_type() to prepend proper string to get_type()
+        type_url: "/ibc.client.MsgUpdateClient".to_ascii_lowercase(),
+        value: new_msg.get_sign_bytes(),
+    };
+
+    proto_msgs.push(any_msg);
+    dest_chain.send(&proto_msgs)
 }

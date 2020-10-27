@@ -65,7 +65,7 @@ impl TryFrom<RawHeader> for Header {
             .try_into()
             .map_err(|_| Kind::InvalidHeader.context("signed header conversion"))?;
         Ok(Self {
-            signed_header: signed_header.clone(),
+            signed_header,
             validator_set: raw
                 .validator_set
                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing validator set"))?

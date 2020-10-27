@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 use ibc_proto::ibc::lightclients::tendermint::v1::ConsensusState as RawConsensusState;
 
 use tendermint::block::signed_header::SignedHeader;
-use tendermint::hash::Algorithm;
+//use tendermint::hash::Algorithm;
 use tendermint::time::Time;
 use tendermint::Hash;
 use tendermint_proto::DomainType;
@@ -13,6 +13,7 @@ use tendermint_proto::DomainType;
 use crate::ics02_client::client_type::ClientType;
 use crate::ics07_tendermint::error::{Error, Kind};
 use crate::ics23_commitment::commitment::CommitmentRoot;
+use tendermint::hash::Algorithm;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConsensusState {
