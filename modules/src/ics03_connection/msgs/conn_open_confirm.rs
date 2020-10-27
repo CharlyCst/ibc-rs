@@ -1,4 +1,3 @@
-use serde_derive::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
@@ -17,7 +16,7 @@ pub const TYPE_MSG_CONNECTION_OPEN_CONFIRM: &str = "connection_open_confirm";
 ///
 /// Message definition for `MsgConnectionOpenConfirm` (i.e., `ConnOpenConfirm` datagram).
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgConnectionOpenConfirm {
     connection_id: ConnectionId,
     proofs: Proofs,

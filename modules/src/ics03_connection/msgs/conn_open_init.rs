@@ -1,4 +1,3 @@
-use serde_derive::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
@@ -17,7 +16,7 @@ pub const TYPE_MSG_CONNECTION_OPEN_INIT: &str = "connection_open_init";
 ///
 /// Message definition `MsgConnectionOpenInit`  (i.e., the `ConnOpenInit` datagram).
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgConnectionOpenInit {
     pub connection_id: ConnectionId,
     pub client_id: ClientId,

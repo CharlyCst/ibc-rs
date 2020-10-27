@@ -25,5 +25,6 @@ bytes = "0.5"
 thiserror = "1.0"
 
 [dependencies.tendermint-proto]
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#git = "https://github.com/informalsystems/tendermint-rs"
+#branch = "greg/research-json"
+path = "../../tendermint-rs/proto"

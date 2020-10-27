@@ -28,24 +28,25 @@ retry = "1.1.0"
 crossbeam-channel = "0.5.0"
 
 [dependencies.tendermint]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/tendermint"
 
 [dependencies.tendermint-rpc]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/rpc"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+path = "../../tendermint-rs/light-client"
 
 [dependencies.tendermint-proto]
-version = "0.17.0-rc1"
-git = "https://github.com/informalsystems/tendermint-rs"
-branch = "greg/research-json"
+#version = "0.17.0-rc1"
+#git = "https://github.com/informalsystems/tendermint-rs"
+#branch = "greg/research-json"
+path = "../../tendermint-rs/proto"
 
 [dev-dependencies]
