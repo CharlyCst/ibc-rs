@@ -83,7 +83,7 @@ impl CompileCmd {
 
         tonic_build::configure()
             .build_client(true)
-            .build_server(false)
+            .build_server(true)
             .format(false)
             .out_dir(out_dir)
             .extern_path(".tendermint", "::tendermint_proto")
